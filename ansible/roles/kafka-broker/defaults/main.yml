@@ -1,0 +1,40 @@
+---
+# defaults file for kafka-broker
+# unique id for kafka user and group
+kafka_user:
+  username: kafka
+  group: kafka
+  uid: 996
+  gid: 993
+  comment: Kafka
+# installation of kafka
+kafka_version: 2.4.0
+kafka_tarball_checksum: md5:82a1ee798daa74260606bf5e5fa56b6a
+# kafka settings
+## kafka max open files
+kafka_nofile: 8192
+## Server Basics
+kafka_broker_id: "{{groups['kafka_brokers'].index(inventory_hostname) + 1}}"
+kafaka_heap_size: 2
+## Log Basics
+kafka_broker_log_dirs: /var/lib/kafka
+kafka_num_partitions: 3
+## Internal Topic Settings
+kafka_topic_replication_factor: 3
+kafka_transaction_state_log:
+    replication_factor: 3
+    min_isr: 2
+## Log Flush Policy
+kafka_log_flush_interval:
+  messages: 10000
+  ms: 1000
+## Log Retention Policy
+kafka_log_retention:
+  hours: 168
+  check_interval_ms: 300000
+kafka_log_segment_bytes: 1073741824
+## Zookeeper
+kafka_zookeeper_connect: 192.168.33.11:2181,192.168.33.12:2181,192.168.33.13:2181
+kafka_zookeeper_connection_timeout_ms: 6000
+## Group Coordinator Settings
+kafka_group_initial_rebalance_delay_ms: 0

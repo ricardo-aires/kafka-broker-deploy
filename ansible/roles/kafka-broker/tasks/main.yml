@@ -1,0 +1,97 @@
+---
+# tasks file for kakfa-broker
+- name: ensure dependencies are installed
+  package:
+    name: "{{ kafka_dependecies }}"
+    state: present
+  with_items:
+    - kafka_dependecies
+
+- name: ensure group kafka exists
+  group:
+    name: "{{ kafka_user.group }}"
+    gid: "{{ kafka_user.gid }}"
+    state: present
+
+- name: ensure user kafka exists
+  user:
+    name: "{{ kafka_user.username }}"
+    group: "{{ kafka_user.group }}"
+    uid: "{{ kafka_user.uid }}"
+    comment: "{{ kafka_user.comment }}"
+    create_home: no
+    shell: /sbin/nologin
+    system: yes
+    state: present
+
+- name: ensure /opt directory exist
+  file:
+    path: /opt/
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+
+- name: ensure necessary directories exist
+  file:
+    path: "{{ item }}"
+    owner: "{{ kafka_user.username }}"
+    group: "{{ kafka_user.group }}"
+    mode: '0750'
+    state: directory
+  loop:
+    - "{{ kafka_broker_log_dirs }}"
+
+- name: ensure latest tarball is fetch
+  get_url:
+    url: "{{ kafka_tarball_url }}"
+    dest: "/opt/{{ kafka_tarball }}"
+    owner: "{{ kafka_user.username }}"
+    group: "{{ kafka_user.group }}"
+    mode: '0440'
+    checksum: "{{ kafka_tarball_checksum }}"
+
+- name: extract tarball
+  unarchive:
+    src: "/opt/{{ kafka_tarball }}"
+    dest: /opt
+    exclude: "server.properties"
+    owner: kafka
+    group: kafka
+    remote_src: yes
+  notify: restart kafka-broker service
+
+- name: fix permissions after extract
+  file:
+    path: "{{ kafka_home_dir }}"
+    owner: "{{ kafka_user.username }}"
+    group: "{{ kafka_user.group }}"
+    recurse: yes
+
+- name: ensure setup file is in-place
+  template:
+    src: server.properties.j2
+    dest: "{{ kafka_conf_dir}}/server.properties"
+    owner: "{{ kafka_user.username }}"
+    group: "{{ kafka_user.group }}"
+    mode: '0640'
+  notify: restart kafka-broker service
+
+- name: setup systemctl kafka broker
+  template:
+    src: kafka-broker.service.j2
+    dest: /etc/systemd/system/kafka-broker.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart kafka-broker service
+
+- name: Force all notified handlers to run at this point
+  meta: flush_handlers
+
+- name: ensure kafka service is enabled and started
+  service:
+    name: kafka-broker
+    state: started
+    enabled: yes
+    daemon_reload: yes

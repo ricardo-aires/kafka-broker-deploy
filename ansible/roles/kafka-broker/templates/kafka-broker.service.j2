@@ -1,0 +1,20 @@
+[Unit]
+Description=Apache Kafka (broker)
+Documentation=http://kafka.apache.org
+Requires=network.target
+After=network.target
+
+[Service]    
+Type=forking
+User={{ kafka_user.username }}
+Group={{ kafka_user.username }}
+LimitNOFILE={{ kafka_nofile }}
+WorkingDirectory={{kafka_home_dir}}
+Environment="KAFKA_HEAP_OPTS=-Xmx{{ kafaka_heap_size }}G -Xms{{ kafaka_heap_size }}G"
+ExecStart={{kafka_home_dir}}/bin/kafka-server-start.sh -daemon {{ kafka_conf_dir }}/server.properties
+ExecStop={{kafka_home_dir}}/bin/kafka-server-stop.sh
+TimeoutSec=180
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

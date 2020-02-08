@@ -1,0 +1,133 @@
+version: '3.7'
+
+services:
+  zookeeper-1:
+    image: myzoo:1.0
+    container_name: zk-1
+    domainname: lab.com
+    hostname: zk-1
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zk-1:2888:3888 server.2=zk-2:2888:3888 server.3=zk-3:2888:3888
+    volumes:
+      - type: volume
+        source: zk-1-data
+        target: /data
+    ports:
+      - target: 8080
+        published: 8081
+        protocol: tcp 
+    restart: always
+    networks:
+      - sub-net
+  zookeeper-2:
+    image: myzoo:1.0
+    container_name: zk-2
+    domainname: lab.com
+    hostname: zk-2
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: server.1=zk-1:2888:3888 server.2=zk-2:2888:3888 server.3=zk-3:2888:3888
+    volumes:
+      - type: volume
+        source: zk-2-data
+        target: /data
+    ports:
+      - target: 8080
+        published: 8082
+        protocol: tcp 
+    restart: always
+    networks:
+      - sub-net
+  zookeeper-3:
+    image: myzoo:1.0
+    container_name: zk-3
+    domainname: lab.com
+    hostname: zk-3
+    environment:
+      ZOO_MY_ID: 3
+      ZOO_SERVERS: server.1=zk-1:2888:3888 server.2=zk-2:2888:3888 server.3=zk-3:2888:3888
+    volumes:
+      - type: volume
+        source: zk-3-data
+        target: /data
+    ports:
+      - target: 8080
+        published: 8083
+        protocol: tcp 
+    restart: always
+    networks:
+      - sub-net
+  kafka-broker-1:
+    build:
+      context: ./build
+    image: mykafka:1.0
+    container_name: kafka-1
+    domainname: lab.com
+    hostname: kafka-1
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_PORT: 9091
+      ZOO_CONNECT: zk-1:2181,zk-2:2181,zk-3:2181
+    volumes:
+      - type: volume
+        source: kafka-1-data
+        target: /tmp/kafka-logs
+    ports:
+      - target: 9091
+        published: 9091
+        protocol: tcp
+    restart: always
+    networks:
+      - sub-net
+  kafka-broker-2:
+    image: mykafka:1.0
+    container_name: kafka-2
+    domainname: lab.com
+    hostname: kafka-2
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_PORT: 9092
+      ZOO_CONNECT: zk-1:2181,zk-2:2181,zk-3:2181
+    volumes:
+      - type: volume
+        source: kafka-2-data
+        target: /tmp/kafka-logs
+    ports:
+      - target: 9092
+        published: 9092
+        protocol: tcp 
+    restart: always
+    networks:
+      - sub-net
+  kafka-broker-3:
+    image: mykafka:1.0
+    container_name: kafka-3
+    domainname: lab.com
+    hostname: kafka-3
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_PORT: 9093
+      ZOO_CONNECT: zk-1:2181,zk-2:2181,zk-3:2181
+    volumes:
+      - type: volume
+        source: kafka-3-data
+        target: /tmp/kafka-logs
+    ports:
+      - target: 9093
+        published: 9093
+        protocol: tcp
+    restart: always
+    networks:
+      - sub-net
+
+volumes:
+  zk-1-data:
+  zk-2-data:
+  zk-3-data:
+  kafka-1-data:
+  kafka-2-data:
+  kafka-3-data:
+
+networks:
+  sub-net:

@@ -1,0 +1,9 @@
+---
+- name: deploy kafka broker
+  hosts: kafka_brokers
+  become: true
+
+  tasks:
+    - name: apply kafka broker role
+      import_role:
+        name: kafka-broker

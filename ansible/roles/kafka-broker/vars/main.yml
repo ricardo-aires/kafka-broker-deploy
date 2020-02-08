@@ -1,0 +1,14 @@
+---
+# vars file for kafka-broker
+# installation of kafka
+kafka_dependecies: 
+  - java-1.8.0-openjdk
+  - bash
+kafka_scala_version: 2.12
+kafka_distro_name: "kafka_{{ kafka_scala_version }}-{{ kafka_version }}"
+kafka_mirror: http://apache-mirror.rbc.ru/pub/apache/kafka
+kafka_tarball: "{{ kafka_distro_name }}.tgz"
+kafka_tarball_url: "{{ kafka_mirror }}/{{ kafka_version }}/{{ kafka_tarball }}"
+# directories for kafka
+kafka_home_dir: "/opt/{{ kafka_distro_name }}"
+kafka_conf_dir: "{{ kafka_home_dir }}/config"
