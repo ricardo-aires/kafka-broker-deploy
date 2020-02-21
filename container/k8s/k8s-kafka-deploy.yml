@@ -7,62 +7,66 @@ metadata:
 apiVersion: v1
 kind: Service
 metadata:
-  name: zk-hs
+  name: zookeeper-headless
   namespace: kafka
   labels:
-    app: zk
+    app: zookeeper
 spec:
+  type: ClusterIP
   clusterIP: None
   ports:
-  - port: 2888
+  - name: tcp-peers
+    port: 2888
     protocol: TCP
-    name: peer-comms
-  - port: 3888
+    targetPort: tcp-peers
+  - name: tcp-leader
+    port: 3888
     protocol: TCP
-    name: leader-election
-  - port: 2181
-    protocol: TCP
-    name: client
+    targetPort: tcp-leader
   selector:
-    app: zk
+    app: zookeeper
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: zk-cs
+  name: zookeeper
   namespace: kafka
   labels:
-    app: zk
+    app: zookeeper
 spec:
   ports:
-  - port: 8080
+  - name: http-admin
+    port: 8080
     protocol: TCP
-    name: admin
-  type: LoadBalancer
+    targetPort: http-admin
+  - name: tcp-client
+    port: 2181
+    protocol: TCP
+    targetPort: tcp-client
   selector:
-    app: zk
+    app: zookeeper
 ---
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
-  name: zk-pdb
+  name: zookeeper-pdb
   namespace: kafka
 spec:
   maxUnavailable: 1
   selector:
     matchLabels:
-      app: zk
+      app: zookeeper
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: zk
+  name: zookeeper
   namespace: kafka
 spec:
   selector:
     matchLabels:
-      app: zk
-  serviceName: zk-hs
+      app: zookeeper
+  serviceName: zookeeper-headless
   replicas: 3
   updateStrategy:
     type: RollingUpdate
@@ -70,10 +74,10 @@ spec:
   template:
     metadata:
       labels:
-        app: zk
+        app: zookeeper
     spec:
       containers:
-      - name: k8s-zookeeper
+      - name: zookeeper
         imagePullPolicy: IfNotPresent
         image: "myzoo:1.0"
         resources:
@@ -87,14 +91,14 @@ spec:
         - name: K8S_ZOO_REPLICAS
           value: "3"
         ports:
-        - containerPort: 2181
-          name: client
-        - containerPort: 2888
-          name: peer-comms
-        - containerPort: 3888
-          name: leader-election
-        - containerPort: 8080
-          name: admin
+        - name: tcp-client
+          containerPort: 2181
+        - name: tcp-peers
+          containerPort: 2888
+        - name: tcp-leader
+          containerPort: 3888
+        - name: http-admin
+          containerPort: 8080
         volumeMounts:
         - name: datadir
           mountPath: /data
@@ -113,16 +117,17 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka-hs
+  name: kafka-headless
   namespace: kafka
   labels:
     app: kafka
 spec:
   clusterIP: None
   ports:
-  - port: 29092
+  - name: tcp-kafka
+    port: 29092
     protocol: TCP
-    name: internal
+    targetPort: tcp-kafka
   selector:
     app: kafka
 ---
@@ -135,7 +140,7 @@ spec:
   selector:
     matchLabels:
       app: kafka
-  serviceName: kafka-hs
+  serviceName: kafka-headless
   replicas: 3
   updateStrategy:
     type: RollingUpdate
@@ -157,10 +162,10 @@ spec:
         - name: KAFKA_K8S
           value: "true"
         - name: ZOO_CONNECT
-          value: "zk-hs"
+          value: "zookeeper-headless"
         ports:
-        - containerPort: 29092
-          name: internal
+        - name: tcp-kafka
+          containerPort: 29092
         volumeMounts:
         - name: kafka-logs
           mountPath: /tmp/kafka-logs
